@@ -68,10 +68,10 @@ const server = new ApolloServer({
 });
 
 const handleGraphQLRequest: CloudflareWorkersHandler = startServerAndCreateCloudflareWorkersHandler(server);
-// export default {
-//   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-//     return new Response(`Hello World! ${crypto.randomUUID()}`);
-//   },
-// };
+export default {
+  fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    return handleGraphQLRequest(request);
+  },
+};
 
-addEventListener('fetch', (e) => e.respondWith(handleGraphQLRequest(e.request as Request)));
+// addEventListener('fetch', (e) => e.respondWith(handleGraphQLRequest(e.request as Request)));
