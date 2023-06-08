@@ -9,6 +9,10 @@ export class PostsAPI extends RESTDataSource {
   }
 
   async getPosts() {
-    return this.get('/posts');
+    return this.get('/posts', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }
