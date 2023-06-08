@@ -3,6 +3,7 @@ import type { CloudflareWorkersHandler } from '@as-integrations/cloudflare-worke
 import { ApolloServer } from '@apollo/server';
 import { startServerAndCreateCloudflareWorkersHandler } from '@as-integrations/cloudflare-workers';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { PostsAPI } from './posts-api';
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
  *
@@ -37,12 +38,20 @@ const typeDefs = `#graphql
     title: String
     author: String
   }
+  
+  type Post {
+    id: Int
+    title: String
+    body: String
+    userId: Int
+  }
 
   # The "Query" type is special: it lists all of the available queries that
   # clients can execute, along with the return type for each. In this
   # case, the "books" query returns an array of zero or more Books (defined above).
   type Query {
     books: [Book]
+    posts: [Post]
   }
 `;
 const books = [
@@ -58,16 +67,33 @@ const books = [
 const resolvers = {
   Query: {
     books: () => books,
+    posts: async (_: any, __: any, { dataSources }: ContextValue) => {
+      return dataSources.postsAPI.getPosts();
+    },
   },
 };
-const server = new ApolloServer({
+interface ContextValue {
+  dataSources: {
+    postsAPI: PostsAPI;
+  };
+}
+const server = new ApolloServer<ContextValue>({
   typeDefs,
   resolvers,
   introspection: true,
   plugins: [ApolloServerPluginLandingPageLocalDefault({ footer: false })],
 });
 
-const handleGraphQLRequest: CloudflareWorkersHandler = startServerAndCreateCloudflareWorkersHandler(server);
+const handleGraphQLRequest: CloudflareWorkersHandler = startServerAndCreateCloudflareWorkersHandler(server, {
+  context: async ({ request }) => {
+    const { cache } = server;
+    return {
+      dataSources: {
+        postsAPI: new PostsAPI({ cache, fetch: fetch.bind(globalThis) }),
+      },
+    };
+  },
+});
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     return handleGraphQLRequest(request);

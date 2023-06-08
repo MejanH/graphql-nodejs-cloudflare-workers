@@ -3,6 +3,9 @@ main = "src/worker.ts"
 compatibility_date = "2023-06-02"
 node_compat = true
 
+[dev]
+port = 8788
+
 # # KV Namespace binding - For more information: https://developers.cloudflare.com/workers/runtime-apis/kv
 # [[kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"
