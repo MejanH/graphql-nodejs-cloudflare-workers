@@ -6,6 +6,9 @@ node_compat = true
 [dev]
 port = 8788
 
+[vars]
+PRECOMPUTED_NONCE = "3b4c0f8e-a266-4574-abbd-ffc8f135cbed"
+
 # # KV Namespace binding - For more information: https://developers.cloudflare.com/workers/runtime-apis/kv
 # [[kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"

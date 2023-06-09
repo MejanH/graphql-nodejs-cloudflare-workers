@@ -15,20 +15,7 @@ import { PostsAPI } from './posts-api';
  */
 
 export interface Env {
-  // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
-  // MY_KV_NAMESPACE: KVNamespace;
-  //
-  // Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
-  // MY_DURABLE_OBJECT: DurableObjectNamespace;
-  //
-  // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
-  // MY_BUCKET: R2Bucket;
-  //
-  // Example binding to a Service. Learn more at https://developers.cloudflare.com/workers/runtime-apis/service-bindings/
-  // MY_SERVICE: Fetcher;
-  //
-  // Example binding to a Queue. Learn more at https://developers.cloudflare.com/queues/javascript-apis/
-  // MY_QUEUE: Queue;
+  PRECOMPUTED_NONCE: string;
 }
 const typeDefs = `#graphql
   # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
@@ -77,25 +64,26 @@ interface ContextValue {
     postsAPI: PostsAPI;
   };
 }
-const server = new ApolloServer<ContextValue>({
-  typeDefs,
-  resolvers,
-  introspection: true,
-  plugins: [ApolloServerPluginLandingPageLocalDefault({ footer: false })],
-});
-
-const handleGraphQLRequest: CloudflareWorkersHandler = startServerAndCreateCloudflareWorkersHandler(server, {
-  context: async ({ request }) => {
-    const { cache } = server;
-    return {
-      dataSources: {
-        postsAPI: new PostsAPI({ cache, fetch: fetch.bind(globalThis) }),
-      },
-    };
-  },
-});
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const server = new ApolloServer<ContextValue>({
+      typeDefs,
+      resolvers,
+      introspection: true,
+      plugins: [ApolloServerPluginLandingPageLocalDefault({ footer: false, precomputedNonce: env.PRECOMPUTED_NONCE })],
+    });
+
+    const handleGraphQLRequest: CloudflareWorkersHandler = startServerAndCreateCloudflareWorkersHandler(server, {
+      context: async ({ request }) => {
+        const { cache } = server;
+        return {
+          dataSources: {
+            postsAPI: new PostsAPI({ cache, fetch: fetch.bind(globalThis) }),
+          },
+        };
+      },
+    });
+    console.log('env', env);
     return handleGraphQLRequest(request);
   },
 };
